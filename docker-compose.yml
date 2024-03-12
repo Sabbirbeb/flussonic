@@ -1,0 +1,43 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16.1-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - /var/lib/postgres/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - default
+  app:
+    image: flussonic-app:local
+    volumes:
+      - ./src:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "9000:9000"
+    healthcheck:
+      test: wget --no-verbose -O /dev/null --tries=1 http://localhost:9000/health || exit 1
+      interval: 10s
+      timeout: 5s
+    networks:
+      - default
+
+volumes:
+  pg_xsm_data:
+    driver: local
+
+networks:
+  default:
+
