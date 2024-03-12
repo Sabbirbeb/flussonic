@@ -3,6 +3,8 @@ from flask_openapi3 import APIBlueprint, Tag
 
 from functools import wraps 
 
+from app.transport.schemas import CreateTask, GetTask
+
 tasks_tag = Tag(name='tasks', description='Tasks')
 tasks = APIBlueprint('/tasks', import_name=__name__, url_prefix='/tasks', abp_tags=[tasks_tag])
 
@@ -14,6 +16,7 @@ security = [
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        current_user = None
         if "Authorization" in request.headers:
             current_user = request.headers["Authorization"].split(" ")[1]
         try:
@@ -44,8 +47,30 @@ def get_tasks(current_user):
     return current_user
 
 
-@tasks.post('/', summary='Create a new task', )
+@tasks.post('/', summary='Create a new task',
+            security=security,
+            responses={200: {"description": "Successful response"}})
 @token_required
-async def create_task():
-    return ...
+def create_task(current_user, body: CreateTask):
+    return body.name
+
+
+@tasks.get('/<int:task_id>', summary='Get task details by ID',
+            security=security,
+            responses={200: {"description": "Successful response"}})
+@token_required
+def get_task(current_user, path: GetTask):
+    if not path.task_id:
+        return "NotFoundResponse", 404
+    return str(path.task_id)
+
+
+@tasks.put('/<int:task_id>', summary='Update task details by ID',
+            security=security,
+            responses={200: {"description": "Successful response"}})
+@token_required
+def put_task(current_user, path: GetTask, body: CreateTask):
+    if not path.task_id:
+        return "NotFoundResponse", 404
+    return str(path.task_id)
 
