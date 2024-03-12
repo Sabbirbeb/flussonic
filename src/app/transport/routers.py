@@ -14,14 +14,6 @@ security = [
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = None
-        print (request.headers["Authorization"])
-        if not request or not request.headers:
-            return {
-                "message": "Invalid Authentication token!",
-                "data": None,
-                "error": "Unauthorized"
-            }, 401
         if "Authorization" in request.headers:
             current_user = request.headers["Authorization"].split(" ")[1]
         try:
@@ -43,7 +35,6 @@ def token_required(f):
     return decorated
 
 
-
 @tasks.get('/', summary='Get a list of tasks',
            security=security,
            responses={200: {"description": "Successful response"},
@@ -54,6 +45,7 @@ def get_tasks(current_user):
 
 
 @tasks.post('/', summary='Create a new task', )
+@token_required
 async def create_task():
     return ...
 
