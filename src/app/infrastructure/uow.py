@@ -32,9 +32,7 @@ class UnitOfWork(IUnitOfWork):
         await self._session.close()
 
     async def rollback(self) -> None:
-        await self.broker.rollback()
         await self._session.rollback()
 
     async def commit(self) -> None:
-        await self.broker.commit()
         await self._session.commit()

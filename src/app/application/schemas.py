@@ -4,7 +4,6 @@ from app import domain
 
 
 class TaskCreate(BaseModel):
-    task_id: int
     title: str
     description: str
     status: str
@@ -17,9 +16,9 @@ class TaskUpdate(BaseModel):
     status: domain.TaskStatus
 
 class UserCreate(BaseModel):
-    name: int
-    admin: int
+    name: str
+    admin: bool
 
 class UserUpdate(BaseModel):
-    name: int
-    admin: int
+    name: str
+    admin: bool

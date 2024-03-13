@@ -2,7 +2,7 @@ import abc
 from typing import Any, Collection, Generic, Never, Self, Type, TypeVar
 from uuid import UUID
 
-from sqlalchemy import Result, Select, exc, insert, select, update
+from sqlalchemy import Result, Select, exc, insert, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import domain
@@ -92,6 +92,12 @@ class SqlRepository(abc.ABC, Generic[T, M]):
 
         return [self.map(obj) for obj in result.scalars()]
 
+    async def delete(self, obj_id: int) -> T | None:
+        query = delete(self.model).where(self.model,id=obj_id)
+        result = await self.session.execute(query)
+
+        return result.scalar()
+
 
 class TasksRepository(SqlRepository[domain.Task, models.Tasks], ITasksRepository):
     model = models.Tasks
@@ -106,14 +112,37 @@ class TasksRepository(SqlRepository[domain.Task, models.Tasks], ITasksRepository
             user_id=task.user_id,
         )
 
+    async def list_by_user_id(self, user_id: str) -> list[domain.Task]:
+        query = select(self.model).filter(user_id=user_id)
+        result = await self.session.execute(query)
+
+        obj = result.scalar()
+        if not obj:
+            return None
+        return self.map(obj)
+
+
+
 
 class UsersRepository(SqlRepository[domain.User, models.Users], IUsersRepository):
     model = models.Users
 
     @classmethod
     def map(cls: type[Self], user: models.Users) -> domain.User:
-        return domain.Task(
+        return domain.User(
             id=user.id,
             name=user.name,
             admin=user.admin,
         )
+    
+    async def get_by_name(self, name: str) -> list[domain.User]:
+        query = select(self.model).filter_by(name=name)
+        result = await self.session.execute(query)
+
+        obj = result.scalar()
+        if not obj:
+            return None
+        return self.map(obj)
+
+    
+

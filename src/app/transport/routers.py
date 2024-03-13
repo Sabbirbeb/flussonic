@@ -4,8 +4,11 @@ from flask_openapi3 import APIBlueprint, Tag
 
 from functools import wraps
 
-from app.dependencies import get_tasks_service
+from app import domain
 from app.application.service import TaskService
+from app.application.schemas import UserCreate
+from app.dependencies import get_tasks_service
+from app.infrastructure.uow import UnitOfWork
 from app.transport.schemas import CreateTask, GetTask, UpdateTask
 
 health_tag = Tag(name="health", description="Health")
@@ -30,13 +33,19 @@ security = [
 
 def token_required(f):
     @wraps(f)
-    def decorated(*args, **kwargs):
+    async def decorated(*args, **kwargs):
         current_user = None
         if "Authorization" in request.headers:
-            current_user = request.headers["Authorization"].split(" ")[1]
+            token = request.headers["Authorization"].split(" ")[1]
         try:
-            service = get_tasks_service()
-            current_user= await service.get_user(current_user)
+            uow = UnitOfWork()
+            async with uow:
+                current_user= await uow.users.get_by_name(token)
+                if not current_user:
+                    current_user = await uow.users.create(UserCreate(name=token,
+                                                                     admin=False))
+                    await uow.commit()
+            print (current_user.name)
             if not current_user:
                 return {
                     "message": "Invalid Authentication token!",
@@ -44,11 +53,12 @@ def token_required(f):
                     "error": "Unauthorized",
                 }, 401
         except Exception as e:
-            return {
+            raise e 
+        '''{
                 "message": "Something went wrong",
-                "data": None,
+                "data": e,
                 "error": str(e),
-            }, 500
+            }, 500'''
 
         return f(current_user, *args, **kwargs)
 
@@ -76,8 +86,8 @@ def get_health():
     },
 )
 @token_required
-def get_user(current_user, 
-             service: TaskService = get_tasks_service()):
+async def get_user(current_user):
+    service: TaskService = await get_tasks_service()
     return "Ok", 200
 
 
@@ -90,8 +100,6 @@ def get_user(current_user,
             
 )
 @token_required
-
-
 @tasks.get(
     "/",
     summary="Get a list of tasks",
@@ -102,8 +110,9 @@ def get_user(current_user,
     },
 )
 @token_required
-def get_tasks(current_user):
-    return current_user
+def get_tasks(current_user: domain.User):
+    
+    return f"{current_user.id}, {current_user.name}, {current_user.admin}" 
 
 
 @tasks.post(
@@ -114,7 +123,7 @@ def get_tasks(current_user):
 )
 @token_required
 def create_task(current_user, body: CreateTask):
-    return body.name
+    return body.title, body.description
 
 
 @tasks.get(

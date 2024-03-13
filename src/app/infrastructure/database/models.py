@@ -1,6 +1,10 @@
 from sqlalchemy import (
+    Column,
     ForeignKey,
     MetaData,
+    Integer,
+    String,
+    Boolean
 )
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column
 
@@ -14,31 +18,17 @@ Base = declarative_base(metadata=metadata)
 class Users(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(
-        primary_key=True,
-        index=True,
-        default=int,
-        nullable=False,
-    )
-
-    name: Mapped[str] = mapped_column(nullable=False)
-
-    admin: Mapped[str] = mapped_column(nullable=False, default=False)
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    admin = Column(Boolean)
 
 
 class Tasks(Base):
-    __tablename__ = "Tasks"
+    __tablename__ = "tasks"
 
-    id: Mapped[int] = mapped_column(
-        primary_key=True,
-        index=True,
-        default=int,
-        nullable=False,
-    )
-    title: Mapped[str] = mapped_column(nullable=False)
-    description: Mapped[str] = mapped_column(nullable=False)
-    status: Mapped[TaskStatus] = mapped_column(
-        nullable=False, default=TaskStatus.WAITING
-    )
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String)
+    description = Column(String)
+    status = Column(String, nullable=False, default=TaskStatus.WAITING)
 
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_id = Column(ForeignKey("users.id"), nullable=False)
