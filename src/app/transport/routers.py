@@ -7,10 +7,10 @@ from functools import wraps
 
 from app import domain
 from app.application.service import TaskService
-from app.application.schemas import UserCreate, UserUpdate
+from app.application.schemas import UserCreate, UserUpdate, TaskCreate, TaskUpdate
 from app.application import errors
 from app.dependencies import get_tasks_service
-from app.transport.schemas import CreateTask, GetTask, UpdateTask
+from app.transport.schemas import CreateTask, GetTask, UpdateTask, SkipLimit
 
 health_tag = Tag(name="health", description="Health")
 health = APIBlueprint(
@@ -162,9 +162,19 @@ async def get_users(current_user):
         400: {"description": "..."},
     },
 )
-@token_required
-def get_tasks(current_user: domain.User):
-    return f"{current_user.id}, {current_user.name}, {current_user.admin}" 
+@token_required_registrated
+async def get_tasks(current_user: domain.User, path: SkipLimit):
+    service: TaskService = await get_tasks_service()
+    tasks = await service.get_tasks(path.skip, path.limit)
+    return json.dumps([{
+            'id':task.id,
+            'title':task.title,
+            'description':task.description,
+            'status':task.status,
+            'user_id':task.user_id
+        }
+        for task in tasks
+        ], indent=2)
 
 
 @tasks.post(
@@ -173,9 +183,21 @@ def get_tasks(current_user: domain.User):
     security=security,
     responses={200: {"description": "Successful response"}},
 )
-@token_required
-def create_task(current_user, body: CreateTask):
-    return body.title, body.description
+@token_required_registrated
+async def create_task(current_user_id, body: CreateTask):
+    service: TaskService = await get_tasks_service()
+    task = await service.create_task(TaskCreate(title=body.title,
+                                               description=body.description,
+                                               user_id=current_user_id
+                                               ))
+    print (task)
+    return json.dumps({
+            'id':task.id,
+            'title':task.title,
+            'description':task.description,
+            'status':task.status,
+            'user_id':task.user_id
+    }, indent=2)
 
 
 @tasks.get(

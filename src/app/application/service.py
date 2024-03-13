@@ -10,18 +10,16 @@ class TaskService:
     ) -> None:
         self.uow: IUnitOfWork = uow
 
-    async def create_task(self, task: domain.Task, user: str) -> domain.Task:
+    async def create_task(self, task: schemas.TaskCreate) -> domain.Task:
         async with self.uow:
-            task = (
-                await self.uow.tasks.create(
+            task = await self.uow.tasks.create(
                     schemas.TaskCreate(
                         title=task.title,
                         description=task.description,
-                        status=domain.Task.CREATED,
-                        user_id=user.id,
+                        status=domain.TaskStatus.WAITING,
+                        user_id=task.user_id,
                     )
-                ),
-            )
+                )
             await self.uow.commit()
         return task
 
