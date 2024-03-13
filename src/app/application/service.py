@@ -52,9 +52,32 @@ class TaskService:
     #     async with self.uow:
     #         return await self.uow.subs.list(skip, limit)
 
-    async def get_user(self, user_id: id) -> domain.User:
+    async def get_user(self, user_id: int) -> domain.User:
         async with self.uow:
             user = await self.uow.users.get(user_id)
+        if not user:
+            raise errors.NotFoundError
+
+        return user
+
+    async def get_users(self) -> list[domain.User]:
+        async with self.uow:
+            users = await self.uow.users.list()
+        if not users:
+            raise errors.NotFoundError
+
+        return users
+
+    async def create_user(self, dto: schemas.UserCreate) -> domain.User:
+        async with self.uow:
+            user = await self.uow.users.create(dto)
+            await self.uow.commit()
+
+        return user
+
+    async def get_user_by_name(self, user_name: str) -> domain.User:
+        async with self.uow:
+            user = await self.uow.users.get_by_name(user_name)
         if not user:
             raise errors.NotFoundError
 
