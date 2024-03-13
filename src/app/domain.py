@@ -16,6 +16,7 @@ class Task:
     title: str
     description: str
     status: TaskStatus
+    user_id: int
 
 
 @dataclass(frozen=True, kw_only=True)

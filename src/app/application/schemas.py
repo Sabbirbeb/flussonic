@@ -6,14 +6,12 @@ from app import domain
 class TaskCreate(BaseModel):
     title: str
     description: str
-    status: str
-    creator_token: str
+    user_id: int
 
 
 class TaskUpdate(BaseModel):
     title: str
     description: str
-    status: domain.TaskStatus
 
 class UserCreate(BaseModel):
     name: str
