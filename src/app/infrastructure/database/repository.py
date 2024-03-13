@@ -96,7 +96,7 @@ class SqlRepository(abc.ABC, Generic[T, M]):
         query = delete(self.model).where(self.model,id=obj_id)
         result = await self.session.execute(query)
 
-        return result.scalar()
+        return self.map(result.scalar())
 
 
 class TasksRepository(SqlRepository[domain.Task, models.Tasks], ITasksRepository):

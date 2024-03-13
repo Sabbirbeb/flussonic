@@ -20,5 +20,4 @@ class UserCreate(BaseModel):
     admin: bool
 
 class UserUpdate(BaseModel):
-    name: str
     admin: bool

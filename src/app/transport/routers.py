@@ -1,4 +1,5 @@
-from dependency_injector.wiring import inject, Provide
+import json
+
 from flask import request
 from flask_openapi3 import APIBlueprint, Tag
 
@@ -6,9 +7,9 @@ from functools import wraps
 
 from app import domain
 from app.application.service import TaskService
-from app.application.schemas import UserCreate
+from app.application.schemas import UserCreate, UserUpdate
+from app.application import errors
 from app.dependencies import get_tasks_service
-from app.infrastructure.uow import UnitOfWork
 from app.transport.schemas import CreateTask, GetTask, UpdateTask
 
 health_tag = Tag(name="health", description="Health")
@@ -30,37 +31,47 @@ security = [
     {"jwt": []},
 ]
 
-
 def token_required(f):
+    @wraps(f)
+    async def decorated(*args, **kwargs):
+        current_user = None
+        if "Authorization" in request.headers:
+            current_user = request.headers["Authorization"].split(" ")[1]
+        if not current_user:
+            return {
+                "message": "Invalid Authentication token!",
+                "data": None,
+                "error": "Unauthorized",
+            }, 403
+        return await f(current_user, *args, **kwargs)
+
+    return decorated
+
+
+def token_required_registrated(f):
     @wraps(f)
     async def decorated(*args, **kwargs):
         current_user = None
         if "Authorization" in request.headers:
             token = request.headers["Authorization"].split(" ")[1]
         try:
-            uow = UnitOfWork()
-            async with uow:
+            service = await get_tasks_service()
+            async with service.uow as uow:
                 current_user= await uow.users.get_by_name(token)
-                if not current_user:
-                    current_user = await uow.users.create(UserCreate(name=token,
-                                                                     admin=False))
-                    await uow.commit()
-            print (current_user.name)
             if not current_user:
                 return {
-                    "message": "Invalid Authentication token!",
+                    "message": "Invalid Authentication token! Registration first!",
                     "data": None,
                     "error": "Unauthorized",
-                }, 401
+                }, 403
         except Exception as e:
-            raise e 
-        '''{
+            {
                 "message": "Something went wrong",
                 "data": e,
                 "error": str(e),
-            }, 500'''
+            }, 500
 
-        return f(current_user, *args, **kwargs)
+        return await f(current_user.id, *args, **kwargs)
 
     return decorated
 
@@ -79,20 +90,26 @@ def get_health():
 
 @user.get(
     "/",
-    summary="Get health status",
+    summary="Update user to admin status",
+    security=security,
     responses={
         200: {"description": "Successful response"},
         400: {"description": "..."},
     },
 )
-@token_required
-async def get_user(current_user):
+@token_required_registrated
+async def make_user_admin(current_user_id):
     service: TaskService = await get_tasks_service()
-    return "Ok", 200
+    async with service.uow as uow:
+        user = await uow.users.update(obj_id=current_user_id,
+                                      update_dto=UserUpdate(admin=True))
+        await uow.commit()
+    return f"{user.id}, {user.name}, admin={user.admin}"
 
 
 @user.post("/",
-            summary="Get health status",
+            summary="Registrate user",
+            security=security,
             responses={
                 200: {"description": "Successful response"},
                 400: {"description": "..."},
@@ -100,6 +117,42 @@ async def get_user(current_user):
             
 )
 @token_required
+async def registrate_user(current_user: domain.User):
+    service: TaskService = await get_tasks_service()
+    try:
+        user = await service.get_user_by_name(current_user)
+    except errors.NotFoundError :
+        user = await service.create_user(UserCreate(name=current_user,
+                                                    admin=False))
+
+    return json.dumps({
+                        'id':user.id,
+                        'name':user.name,
+                        'admin':user.admin
+                    },
+                    indent=2)
+
+
+@user.get("/list",
+            summary="List users",
+            security=security,
+            responses={
+                200: {"description": "Successful response"},
+                400: {"description": "..."},
+            },
+            )
+@token_required_registrated
+async def get_users(current_user):
+    service: TaskService = await get_tasks_service()
+    users = await service.get_users()
+    return json.dumps([{
+            'id':user.id,
+            'name':user.name,
+            'admin':user.admin
+        }
+        for user in users
+        ], indent=2)
+
 @tasks.get(
     "/",
     summary="Get a list of tasks",
@@ -111,7 +164,6 @@ async def get_user(current_user):
 )
 @token_required
 def get_tasks(current_user: domain.User):
-    
     return f"{current_user.id}, {current_user.name}, {current_user.admin}" 
 
 

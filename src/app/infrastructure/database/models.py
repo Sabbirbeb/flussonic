@@ -6,7 +6,7 @@ from sqlalchemy import (
     String,
     Boolean
 )
-from sqlalchemy.orm import Mapped, declarative_base, mapped_column
+from sqlalchemy.orm import declarative_base
 
 from app.domain import TaskStatus
 
