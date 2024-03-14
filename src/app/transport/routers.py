@@ -56,7 +56,7 @@ def token_required_registrated(f):
             token = request.headers["Authorization"].split(" ")[1]
         else:
             return {
-                "message": "No Authentication token! Registration first!",
+                "message": "No Bearer token!",
                 "data": None,
                 "error": "Unauthorized",
             }, 403
