@@ -54,6 +54,12 @@ def token_required_registrated(f):
         current_user = None
         if "Authorization" in request.headers:
             token = request.headers["Authorization"].split(" ")[1]
+        else:
+            return {
+                "message": "No Authentication token! Registration first!",
+                "data": None,
+                "error": "Unauthorized",
+            }, 403
         try:
             service = await get_tasks_service()
             async with service.uow as uow:
