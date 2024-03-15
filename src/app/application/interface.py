@@ -58,21 +58,18 @@ class IUsersRepository(ABC):
     @abstractmethod
     async def get(self, obj_id: int) -> domain.User | None:
         ...
-    
+
     @abstractmethod
     async def get_by_name(self, name: str) -> domain.User | None:
         ...
 
     @abstractmethod
-    async def update(
-        self, obj_id: int, update_dto: schemas.User
-    ) -> domain.User | None:
+    async def update(self, obj_id: int, update_dto: schemas.User) -> domain.User | None:
         ...
 
     @abstractmethod
     async def delete(self, obj_id: int) -> bool | None:
         ...
-
 
     @abstractmethod
     async def list_by_id(self, ids: Collection[int]) -> list[domain.User]:

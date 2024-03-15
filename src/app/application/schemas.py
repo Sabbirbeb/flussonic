@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from app.domain import TaskStatus
+
 
 class TaskCreate(BaseModel):
     title: str
@@ -10,6 +12,7 @@ class TaskCreate(BaseModel):
 class TaskUpdate(BaseModel):
     title: str
     description: str
+    status: TaskStatus
 
 
 class UserCreate(BaseModel):

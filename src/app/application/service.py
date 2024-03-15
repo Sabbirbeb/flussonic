@@ -13,17 +13,19 @@ class TaskService:
     async def create_task(self, task: schemas.TaskCreate) -> domain.Task:
         async with self.uow:
             task = await self.uow.tasks.create(
-                    schemas.TaskCreate(
-                        title=task.title,
-                        description=task.description,
-                        status=domain.TaskStatus.WAITING,
-                        user_id=task.user_id,
-                    )
+                schemas.TaskCreate(
+                    title=task.title,
+                    description=task.description,
+                    status=domain.TaskStatus.WAITING,
+                    user_id=task.user_id,
                 )
+            )
             await self.uow.commit()
         return task
 
-    async def update_task(self, task_id: int, dto: schemas.TaskUpdate, user: schemas.User) -> domain.Task:
+    async def update_task(
+        self, task_id: int, dto: schemas.TaskUpdate, user: schemas.User
+    ) -> domain.Task:
         async with self.uow:
             task = await self.uow.tasks.get(task_id)
             if not task:
@@ -33,13 +35,13 @@ class TaskService:
                 await self.uow.commit()
             else:
                 raise errors.NoPermissionError
-            
+
         return task
 
     async def get_tasks(self) -> list[domain.Task]:
         async with self.uow:
             tasks = await self.uow.tasks.list()
-        
+
         return tasks
 
     async def get_task(self, task_id: int) -> domain.Task:
@@ -49,7 +51,7 @@ class TaskService:
             raise errors.NotFoundError
 
         return task
-    
+
     async def delete_task(self, task_id: int, user: schemas.User):
         async with self.uow:
             task = await self.uow.tasks.get(task_id)
@@ -60,7 +62,7 @@ class TaskService:
                 await self.uow.commit()
             else:
                 raise errors.NoPermissionError
-            
+
         return task
 
     # async def get_subscriptions(
@@ -102,10 +104,11 @@ class TaskService:
 
     async def update_user_to_admin(self, user: schemas.User) -> domain.User:
         async with self.uow:
-            user = await self.uow.users.update(user.id,
-                                               update_dto=schemas.UserUpdate(admin=True))
+            user = await self.uow.users.update(
+                user.id, update_dto=schemas.UserUpdate(admin=True)
+            )
             await self.uow.commit()
-        
+
         return user
 
     # async def update_or_create_admin(

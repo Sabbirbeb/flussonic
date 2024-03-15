@@ -9,10 +9,8 @@ from app import domain
 from app.application import errors
 from app.application.logger import log
 from app.infrastructure.database import models
-from app.application.interface import (
-    ITasksRepository,
-    IUsersRepository
-)
+from app.application.interface import ITasksRepository, IUsersRepository
+
 T = TypeVar("T")
 M = TypeVar("M")
 
@@ -101,7 +99,7 @@ class SqlRepository(abc.ABC, Generic[T, M]):
 
     @log
     async def delete(self, obj_id: int) -> T | None:
-        query = delete(self.model).where(self.model.id==obj_id)
+        query = delete(self.model).where(self.model.id == obj_id)
         await self.session.execute(query)
 
         return 0
@@ -128,8 +126,6 @@ class TasksRepository(SqlRepository[domain.Task, models.Tasks], ITasksRepository
         return [self.map(obj) for obj in result.scalars()]
 
 
-
-
 class UsersRepository(SqlRepository[domain.User, models.Users], IUsersRepository):
     model = models.Users
 
@@ -150,6 +146,3 @@ class UsersRepository(SqlRepository[domain.User, models.Users], IUsersRepository
         if not obj:
             return None
         return self.map(obj)
-
-    
-

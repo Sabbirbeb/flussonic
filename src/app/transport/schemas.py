@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 
 from app.domain import TaskStatus
 
+
 class CreateTask(BaseModel):
     title: str = Field(
         None, description="Name", json_schema_extra={"example": "Task 1"}
@@ -34,6 +35,7 @@ class GetTask(BaseModel):
         None, ge=1, description="Tasks ID", json_schema_extra={"example": 1}
     )
 
+
 class Task(BaseModel):
     task_id: int = Field(
         None, ge=1, description="Tasks ID", json_schema_extra={"example": 1}
@@ -50,6 +52,7 @@ class Task(BaseModel):
         None,
         description="User id",
     )
+
 
 class GetUsersResponse(BaseModel):
     class User(BaseModel):

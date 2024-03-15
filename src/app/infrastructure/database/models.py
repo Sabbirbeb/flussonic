@@ -1,11 +1,4 @@
-from sqlalchemy import (
-    Column,
-    ForeignKey,
-    MetaData,
-    Integer,
-    String,
-    Boolean
-)
+from sqlalchemy import Column, ForeignKey, MetaData, Integer, String, Boolean
 from sqlalchemy.orm import declarative_base
 
 from app.domain import TaskStatus

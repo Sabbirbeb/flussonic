@@ -1,5 +1,6 @@
 class NotFoundError(Exception):
     ...
 
+
 class NoPermissionError(Exception):
     ...
