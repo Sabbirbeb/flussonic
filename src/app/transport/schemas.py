@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+from app.domain import TaskStatus
 
 class CreateTask(BaseModel):
     title: str = Field(
@@ -20,6 +21,11 @@ class UpdateTask(BaseModel):
         None,
         description="description",
         json_schema_extra={"example": "Review the code changes"},
+    )
+    status: TaskStatus = Field(
+        None,
+        description="description",
+        json_schema_extra={"example": TaskStatus.PROCESSING},
     )
 
 

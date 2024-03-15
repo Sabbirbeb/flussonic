@@ -161,7 +161,6 @@ async def get_users(current_user):
         }
         for user in users
         ], indent=2)
-
 @tasks.get(
     "/",
     summary="Get a list of tasks",
@@ -242,7 +241,8 @@ async def put_task(current_user, path: GetTask, body: UpdateTask):
     try:
         task = await service.update_task(path.task_id, 
                                             UpdateTask(title=body.title,
-                                                        description=body.description),
+                                                        description=body.description,
+                                                        status=body.status),
                                             user=current_user)
     except errors.NotFoundError:
         return "NotFoundResponse", 404
