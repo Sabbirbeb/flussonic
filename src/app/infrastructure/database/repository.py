@@ -86,8 +86,8 @@ class SqlRepository(abc.ABC, Generic[T, M]):
         result: Result[tuple[M]] = await self.session.execute(query)
         return [self.map(obj) for obj in result.scalars()]
 
-    async def list(self, skip: int = 0, limit: int = 100) -> list[T]:
-        query = select(self.model).offset(skip).limit(limit)
+    async def list(self) -> list[T]:
+        query = select(self.model)
         result = await self.session.execute(query)
 
         return [self.map(obj) for obj in result.scalars()]
@@ -116,10 +116,7 @@ class TasksRepository(SqlRepository[domain.Task, models.Tasks], ITasksRepository
         query = select(self.model).filter(user_id=user_id)
         result = await self.session.execute(query)
 
-        obj = result.scalar()
-        if not obj:
-            return None
-        return self.map(obj)
+        return [self.map(obj) for obj in result.scalars()]
 
 
 

@@ -7,24 +7,24 @@ from functools import wraps
 
 from app import domain
 from app.application.service import TaskService
-from app.application.schemas import UserCreate, UserUpdate, TaskCreate, TaskUpdate
+from app.application.schemas import UserCreate, TaskCreate, TaskUpdate, User
 from app.application import errors
 from app.dependencies import get_tasks_service
-from app.transport.schemas import CreateTask, GetTask, UpdateTask, SkipLimit
+from app.transport.schemas import CreateTask, GetTask, UpdateTask
 
 health_tag = Tag(name="health", description="Health")
 health = APIBlueprint(
-    "/health", import_name=__name__, url_prefix="/health", abp_tags=[health_tag]
+    "/api/v1/health", import_name=__name__, url_prefix="/api/v1/health", abp_tags=[health_tag]
 )
 
 tasks_tag = Tag(name="tasks", description="Tasks")
 tasks = APIBlueprint(
-    "/tasks", import_name=__name__, url_prefix="/tasks", abp_tags=[tasks_tag]
+    "/api/v1/tasks", import_name=__name__, url_prefix="/api/v1/tasks", abp_tags=[tasks_tag]
 )
 
 user_tag = Tag(name="user", description="User")
 user = APIBlueprint(
-    "/user", import_name=__name__, url_prefix="/user", abp_tags=[user_tag]
+    "/api/v1/user", import_name=__name__, url_prefix="/api/v1/user", abp_tags=[user_tag]
 )
 
 security = [
@@ -71,13 +71,15 @@ def token_required_registrated(f):
                     "error": "Unauthorized",
                 }, 403
         except Exception as e:
-            {
+            return {
                 "message": "Something went wrong",
                 "data": e,
                 "error": str(e),
             }, 500
 
-        return await f(current_user.id, *args, **kwargs)
+        return await f(User(id=current_user.id,
+                            name=current_user.name,
+                            admin=current_user.admin), *args, **kwargs)
 
     return decorated
 
@@ -104,13 +106,13 @@ def get_health():
     },
 )
 @token_required_registrated
-async def make_user_admin(current_user_id):
+async def make_user_admin(user: User):
     service: TaskService = await get_tasks_service()
-    async with service.uow as uow:
-        user = await uow.users.update(obj_id=current_user_id,
-                                      update_dto=UserUpdate(admin=True))
-        await uow.commit()
-    return f"{user.id}, {user.name}, admin={user.admin}"
+    user = await service.update_user_to_admin(user=user)
+    return json.dumps({"id":user.id,
+                       "name":user.name,
+                       "admin":user.admin
+                       }, indent=2)
 
 
 @user.post("/",
@@ -169,9 +171,9 @@ async def get_users(current_user):
     },
 )
 @token_required_registrated
-async def get_tasks(current_user: domain.User, path: SkipLimit):
+async def get_tasks(current_user: domain.User):
     service: TaskService = await get_tasks_service()
-    tasks = await service.get_tasks(path.skip, path.limit)
+    tasks = await service.get_tasks()
     return json.dumps([{
             'id':task.id,
             'title':task.title,
@@ -190,11 +192,11 @@ async def get_tasks(current_user: domain.User, path: SkipLimit):
     responses={200: {"description": "Successful response"}},
 )
 @token_required_registrated
-async def create_task(current_user_id, body: CreateTask):
+async def create_task(current_user, body: CreateTask):
     service: TaskService = await get_tasks_service()
     task = await service.create_task(TaskCreate(title=body.title,
                                                description=body.description,
-                                               user_id=current_user_id
+                                               user_id=current_user.id
                                                ))
     print (task)
     return json.dumps({
@@ -212,11 +214,20 @@ async def create_task(current_user_id, body: CreateTask):
     security=security,
     responses={200: {"description": "Successful response"}},
 )
-@token_required
-def get_task(current_user, path: GetTask):
-    if not path.task_id:
+@token_required_registrated
+async def get_task(current_user, path: GetTask):
+    service: TaskService = await get_tasks_service()
+    try:
+        task = await service.get_task(task_id=path.task_id)
+    except errors.NotFoundError:
         return "NotFoundResponse", 404
-    return str(path.task_id)
+    return json.dumps({
+            'id':task.id,
+            'title':task.title,
+            'description':task.description,
+            'status':task.status,
+            'user_id':task.user_id
+    }, indent=2)
 
 
 @tasks.put(
@@ -225,12 +236,24 @@ def get_task(current_user, path: GetTask):
     security=security,
     responses={200: {"description": "Successful response"}},
 )
-@token_required
-def put_task(current_user, path: GetTask, body: UpdateTask):
-    if not path.task_id:
+@token_required_registrated
+async def put_task(current_user, path: GetTask, body: UpdateTask):
+    service: TaskService = await get_tasks_service()
+    try:
+        task = await service.update_task(path.task_id, 
+                                            UpdateTask(title=body.title,
+                                                        description=body.description),
+                                            user=current_user)
+    except errors.NotFoundError:
         return "NotFoundResponse", 404
-    return str(path.task_id)
-
+    except errors.NoPermissionError:
+        return "NoPermissionResponse", 403
+    return json.dumps({ "id": task.id,
+                        "title": task.title,
+                        "description": task.description,
+                        "status": task.status,
+                        "user_id": task.user_id
+                    }, indent=2)
 
 @tasks.delete(
     "/",
@@ -238,6 +261,13 @@ def put_task(current_user, path: GetTask, body: UpdateTask):
     security=security,
     responses={200: {"description": "Successful response"}},
 )
-@token_required
-def delete(current_user, path: GetTask):
-    ...
+@token_required_registrated
+async def delete(current_user, path: GetTask):
+    try:
+        ...
+    except errors.NotFoundError:
+        return "NotFoundResponse", 404
+    except errors.NoPermissionError:
+        return "NoPermissionResponse", 403
+
+    return "Successful response", 200

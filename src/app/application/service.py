@@ -23,26 +23,35 @@ class TaskService:
             await self.uow.commit()
         return task
 
-    async def update_task(self, task_id: int, dto: schemas.TaskUpdate) -> domain.Task:
+    async def update_task(self, task_id: int, dto: schemas.TaskUpdate, user: schemas.User) -> domain.Task:
         async with self.uow:
-            batch = await self.uow.tasks.update(task_id, dto)
-            if not batch:
+            task = await self.uow.tasks.get(task_id)
+            if not task:
                 raise errors.NotFoundError
+            if task.user_id == user.id or user.admin:
+                task = await self.uow.tasks.update(task_id, dto)
+            else:
+                raise errors.NoPermissionError
             await self.uow.commit()
 
-        return batch
+        return task
 
-    async def get_tasks(self, skip: int, limit: int) -> list[domain.Task]:
+    async def get_tasks(self) -> list[domain.Task]:
         async with self.uow:
-            return await self.uow.tasks.list(skip, limit)
+            tasks = await self.uow.tasks.list()
+        
+        return tasks
 
     async def get_task(self, task_id: int) -> domain.Task:
         async with self.uow:
-            batch = await self.uow.batches.get(task_id)
-        if not batch:
+            task = await self.uow.tasks.get(task_id)
+        if not task:
             raise errors.NotFoundError
 
-        return batch
+        return task
+    
+    async def delete_task(self, task_id: int, user: schemas.User):
+        ...
 
     # async def get_subscriptions(
     #     self, skip: int, limit: int
@@ -50,9 +59,9 @@ class TaskService:
     #     async with self.uow:
     #         return await self.uow.subs.list(skip, limit)
 
-    async def get_user(self, user_id: int) -> domain.User:
+    async def get_user(self, user: schemas.User) -> domain.User:
         async with self.uow:
-            user = await self.uow.users.get(user_id)
+            user = await self.uow.users.get(user.id)
         if not user:
             raise errors.NotFoundError
 
@@ -79,6 +88,14 @@ class TaskService:
         if not user:
             raise errors.NotFoundError
 
+        return user
+
+    async def update_user_to_admin(self, user: schemas.User) -> domain.User:
+        async with self.uow:
+            user = await self.uow.users.update(user.id,
+                                               update_dto=schemas.UserUpdate(admin=True))
+            await self.uow.commit()
+        
         return user
 
     # async def update_or_create_admin(
