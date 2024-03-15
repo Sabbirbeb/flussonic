@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import domain
 from app.application import errors
+from app.application.logger import log
 from app.infrastructure.database import models
 from app.application.interface import (
     ITasksRepository,
@@ -27,6 +28,7 @@ class SqlRepository(abc.ABC, Generic[T, M]):
     def map(cls: type[Self], obj: M) -> T:
         ...
 
+    @log
     async def bulk_create(self, create_dtos: list[Any]) -> list[T]:
         try:
             query: Any = (
@@ -42,6 +44,7 @@ class SqlRepository(abc.ABC, Generic[T, M]):
 
         return [self.map(obj) for obj in objects]
 
+    @log
     async def create(self, create_dto: Any) -> T:  # noqa: ANN401
         try:
             cmd = (
@@ -54,6 +57,7 @@ class SqlRepository(abc.ABC, Generic[T, M]):
             raise errors.MutationConflictError(e)
         return self.map(obj)
 
+    @log
     async def get(self, obj_id: UUID | str) -> T | None:
         query = select(self.model).filter_by(id=obj_id)
         result = await self.session.execute(query)
@@ -63,6 +67,7 @@ class SqlRepository(abc.ABC, Generic[T, M]):
 
         return self.map(obj)
 
+    @log
     async def update(self, obj_id: UUID | str, update_dto: Any) -> T | None:  # noqa: ANN401
         try:
             cmd = (
@@ -81,20 +86,23 @@ class SqlRepository(abc.ABC, Generic[T, M]):
 
         return self.map(obj)
 
+    @log
     async def list_by_id(self, ids: Collection[UUID | str]) -> list[T]:
         query: Select[tuple[Never]] = select(self.model).where(self.model.id.in_(ids))  # type: ignore
         result: Result[tuple[M]] = await self.session.execute(query)
         return [self.map(obj) for obj in result.scalars()]
 
+    @log
     async def list(self) -> list[T]:
         query = select(self.model)
         result = await self.session.execute(query)
 
         return [self.map(obj) for obj in result.scalars()]
 
+    @log
     async def delete(self, obj_id: int) -> T | None:
         query = delete(self.model).where(self.model.id==obj_id)
-        result = await self.session.execute(query)
+        await self.session.execute(query)
 
         return 0
 
@@ -112,6 +120,7 @@ class TasksRepository(SqlRepository[domain.Task, models.Tasks], ITasksRepository
             user_id=task.user_id,
         )
 
+    @log
     async def list_by_user_id(self, user_id: str) -> list[domain.Task]:
         query = select(self.model).filter(user_id=user_id)
         result = await self.session.execute(query)
@@ -131,7 +140,8 @@ class UsersRepository(SqlRepository[domain.User, models.Users], IUsersRepository
             name=user.name,
             admin=user.admin,
         )
-    
+
+    @log
     async def get_by_name(self, name: str) -> list[domain.User]:
         query = select(self.model).filter_by(name=name)
         result = await self.session.execute(query)

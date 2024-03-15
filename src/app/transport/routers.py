@@ -8,7 +8,7 @@ from functools import wraps
 
 from app import domain
 from app.application.service import TaskService
-from app.application.schemas import UserCreate, TaskCreate, TaskUpdate, User
+from app.application.schemas import UserCreate, TaskCreate, User
 from app.application import errors
 from app.dependencies import get_tasks_service
 from app.transport.schemas import CreateTask, GetTask, UpdateTask
@@ -199,7 +199,6 @@ async def create_task(current_user, body: CreateTask):
                                                description=body.description,
                                                user_id=current_user.id
                                                ))
-    print (task)
     return json.dumps({
             'id':task.id,
             'title':task.title,

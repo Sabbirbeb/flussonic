@@ -53,7 +53,6 @@ class TaskService:
     async def delete_task(self, task_id: int, user: schemas.User):
         async with self.uow:
             task = await self.uow.tasks.get(task_id)
-            print (task)
             if not task:
                 raise errors.NotFoundError
             if task.user_id == user.id or user.admin:
