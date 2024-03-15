@@ -1,13 +1,5 @@
 from pydantic import BaseModel, Field
 
-class SkipLimit(BaseModel):
-    skip: int = Field(
-        None, ge=1, description="Skip", json_schema_extra={"example": 1}
-    )
-    limit: int = Field(
-        None, ge=1, description="Limit", json_schema_extra={"example": 50}
-    )
-
 
 class CreateTask(BaseModel):
     title: str = Field(

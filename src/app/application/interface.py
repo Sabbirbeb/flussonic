@@ -40,7 +40,7 @@ class ITasksRepository(ABC):
         ...
 
     @abstractmethod
-    async def list(self, skip: int = 0, limit: int = 100) -> list[domain.Task]:
+    async def list(self) -> list[domain.Task]:
         ...
 
 
@@ -65,7 +65,7 @@ class IUsersRepository(ABC):
 
     @abstractmethod
     async def update(
-        self, obj_id: int, update_dto: schemas.UserUpdate
+        self, obj_id: int, update_dto: schemas.User
     ) -> domain.User | None:
         ...
 
@@ -79,7 +79,7 @@ class IUsersRepository(ABC):
         ...
 
     @abstractmethod
-    async def list(self, skip: int = 0, limit: int = 100) -> list[domain.User]:
+    async def list(self) -> list[domain.User]:
         ...
 
 
