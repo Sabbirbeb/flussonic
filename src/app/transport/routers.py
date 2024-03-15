@@ -1,3 +1,4 @@
+#fastapi > flask??? https://habr.com/ru/articles/748618/
 import json
 
 from flask import request
@@ -119,7 +120,7 @@ async def make_user_admin(user: User):
             summary="Registrate user",
             security=security,
             responses={
-                200: {"description": "Successful response"},
+                201: {"description": "Successful response"},
                 400: {"description": "..."},
             },
             
@@ -182,14 +183,14 @@ async def get_tasks(current_user: domain.User):
             'user_id':task.user_id
         }
         for task in tasks
-        ], indent=2)
+        ], indent=2), 200
 
 
 @tasks.post(
     "/",
     summary="Create a new task",
     security=security,
-    responses={200: {"description": "Successful response"}},
+    responses={201: {"description": "Task created successfully"}},
 )
 @token_required_registrated
 async def create_task(current_user, body: CreateTask):
@@ -205,7 +206,7 @@ async def create_task(current_user, body: CreateTask):
             'description':task.description,
             'status':task.status,
             'user_id':task.user_id
-    }, indent=2)
+    }, indent=2), 201
 
 
 @tasks.get(
@@ -227,14 +228,14 @@ async def get_task(current_user, path: GetTask):
             'description':task.description,
             'status':task.status,
             'user_id':task.user_id
-    }, indent=2)
+    }, indent=2), 200
 
 
 @tasks.put(
     "/<int:task_id>",
     summary="Update task details by ID",
     security=security,
-    responses={200: {"description": "Successful response"}},
+    responses={200: {"description": "Task updated successfully"}},
 )
 @token_required_registrated
 async def put_task(current_user, path: GetTask, body: UpdateTask):
@@ -253,21 +254,27 @@ async def put_task(current_user, path: GetTask, body: UpdateTask):
                         "description": task.description,
                         "status": task.status,
                         "user_id": task.user_id
-                    }, indent=2)
+                    }, indent=2), 200
 
 @tasks.delete(
-    "/",
-    summary="Update task details by ID",
+    "/<int:task_id>",
+    summary="Delete a task by ID",
     security=security,
-    responses={200: {"description": "Successful response"}},
+    responses={204: {"description": "Task deleted successfully"}},
 )
 @token_required_registrated
 async def delete(current_user, path: GetTask):
+    service: TaskService = await get_tasks_service()
     try:
-        ...
+        task = await service.delete_task(path.task_id,
+                                            user=current_user)
     except errors.NotFoundError:
         return "NotFoundResponse", 404
     except errors.NoPermissionError:
         return "NoPermissionResponse", 403
-
-    return "Successful response", 200
+    return json.dumps({ "id": task.id,
+                        "title": task.title,
+                        "description": task.description,
+                        "status": task.status,
+                        "user_id": task.user_id
+                    }, indent=2), 200

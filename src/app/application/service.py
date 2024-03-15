@@ -30,10 +30,10 @@ class TaskService:
                 raise errors.NotFoundError
             if task.user_id == user.id or user.admin:
                 task = await self.uow.tasks.update(task_id, dto)
+                await self.uow.commit()
             else:
                 raise errors.NoPermissionError
-            await self.uow.commit()
-
+            
         return task
 
     async def get_tasks(self) -> list[domain.Task]:
@@ -51,7 +51,18 @@ class TaskService:
         return task
     
     async def delete_task(self, task_id: int, user: schemas.User):
-        ...
+        async with self.uow:
+            task = await self.uow.tasks.get(task_id)
+            print (task)
+            if not task:
+                raise errors.NotFoundError
+            if task.user_id == user.id or user.admin:
+                await self.uow.tasks.delete(task_id)
+                await self.uow.commit()
+            else:
+                raise errors.NoPermissionError
+            
+        return task
 
     # async def get_subscriptions(
     #     self, skip: int, limit: int
