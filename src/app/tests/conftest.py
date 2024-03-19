@@ -14,6 +14,7 @@ from app.infrastructure.uow import UnitOfWork
 
 
 @pytest.fixture(autouse=True)
+@pytest.mark.asyncio
 async def setup_bd() -> AsyncGenerator[None, None]:
     local_async_engine = get_database_engine()
     async with local_async_engine.begin() as connection:

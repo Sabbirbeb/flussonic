@@ -8,7 +8,6 @@ from app.domain import TaskStatus, User
 class TestTasksRepo:
     @pytest.mark.asyncio()
     async def test_create(self, uow: IUnitOfWork, user: User) -> None:
-        user = await user
         async with uow:
             task = await uow.tasks.create(
                 schemas.TaskCreate(
@@ -32,7 +31,6 @@ class TestTasksRepo:
         uow: IUnitOfWork,
         user: User,
     ) -> None:
-        user = await user
         async with uow:
             task = await uow.tasks.create(
                 schemas.TaskCreate(
@@ -57,7 +55,6 @@ class TestTasksRepo:
         uow: IUnitOfWork,
         user: User,
     ) -> None:
-        user = await user
         async with uow:
             task = await uow.tasks.create(
                 schemas.TaskCreate(
@@ -86,7 +83,6 @@ class TestTasksRepo:
         uow: IUnitOfWork,
         user: User,
     ) -> None:
-        user = await user
         async with uow:
             task = await uow.tasks.create(
                 schemas.TaskCreate(
