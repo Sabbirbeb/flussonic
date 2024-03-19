@@ -1,17 +1,19 @@
 # fastapi > flask??? https://habr.com/ru/articles/748618/
 import json
+from functools import wraps
+from typing import TYPE_CHECKING
 
-from flask import request
+from flask import Response, request
 from flask_openapi3 import APIBlueprint, Tag
 
-from functools import wraps
-
 from app import domain
-from app.application.service import TaskService
-from app.application.schemas import UserCreate, TaskCreate, User
 from app.application import errors
+from app.application.schemas import TaskCreate, User, UserCreate
 from app.dependencies import get_tasks_service
 from app.transport.schemas import CreateTask, GetTask, UpdateTask
+
+if TYPE_CHECKING:
+    from app.application.service import TaskService
 
 health_tag = Tag(name="health", description="Health")
 health = APIBlueprint(
@@ -30,18 +32,16 @@ tasks = APIBlueprint(
 )
 
 user_tag = Tag(name="user", description="User")
-user = APIBlueprint(
-    "/api/v1/user", import_name=__name__, url_prefix="/api/v1/user", abp_tags=[user_tag]
-)
+user = APIBlueprint("/api/v1/user", import_name=__name__, url_prefix="/api/v1/user", abp_tags=[user_tag])
 
 security = [
     {"jwt": []},
 ]
 
 
-def token_required(f):
+def token_required(f) -> Response:  # noqa: ANN001
     @wraps(f)
-    async def decorated(*args, **kwargs):
+    async def decorated(*args: list, **kwargs: dict) -> Response:
         current_user = None
         if "Authorization" in request.headers:
             current_user = request.headers["Authorization"].split(" ")[1]
@@ -56,9 +56,9 @@ def token_required(f):
     return decorated
 
 
-def token_required_registrated(f):
+def token_required_registrated(f) -> Response:  # noqa: ANN001
     @wraps(f)
-    async def decorated(*args, **kwargs):
+    async def decorated(*args: list, **kwargs: dict) -> Response:
         current_user = None
         if "Authorization" in request.headers:
             token = request.headers["Authorization"].split(" ")[1]
@@ -78,7 +78,7 @@ def token_required_registrated(f):
                     "data": None,
                     "error": "Unauthorized",
                 }, 403
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {
                 "message": "Something went wrong",
                 "data": e,
@@ -102,8 +102,8 @@ def token_required_registrated(f):
         400: {"description": "..."},
     },
 )
-def get_health():
-    return "Ok", 200
+def get_health() -> Response:
+    return Response("Ok", status=200)
 
 
 @user.get(
@@ -116,7 +116,7 @@ def get_health():
     },
 )
 @token_required_registrated
-async def make_user_admin(user: User):
+async def make_user_admin(user: User) -> Response:
     service: TaskService = await get_tasks_service()
     user = await service.update_user_to_admin(user=user)
     return json.dumps({"id": user.id, "name": user.name, "admin": user.admin}, indent=2)
@@ -132,7 +132,7 @@ async def make_user_admin(user: User):
     },
 )
 @token_required
-async def registrate_user(current_user: domain.User):
+async def registrate_user(current_user: domain.User) -> Response:
     service: TaskService = await get_tasks_service()
     try:
         user = await service.get_user_by_name(current_user)
@@ -152,7 +152,7 @@ async def registrate_user(current_user: domain.User):
     },
 )
 @token_required_registrated
-async def get_users(current_user):
+async def get_users(current_user: User) -> Response:  # noqa: ARG001
     service: TaskService = await get_tasks_service()
     users = await service.get_users()
     return json.dumps(
@@ -171,7 +171,7 @@ async def get_users(current_user):
     },
 )
 @token_required_registrated
-async def get_tasks(current_user: domain.User):
+async def get_tasks(current_user: User) -> Response:  # noqa: ARG001
     service: TaskService = await get_tasks_service()
     tasks = await service.get_tasks()
     return json.dumps(
@@ -196,12 +196,10 @@ async def get_tasks(current_user: domain.User):
     responses={201: {"description": "Task created successfully"}},
 )
 @token_required_registrated
-async def create_task(current_user, body: CreateTask):
+async def create_task(current_user: User, body: CreateTask) -> Response:
     service: TaskService = await get_tasks_service()
     task = await service.create_task(
-        TaskCreate(
-            title=body.title, description=body.description, user_id=current_user.id
-        )
+        TaskCreate(title=body.title, description=body.description, user_id=current_user.id),
     )
     return json.dumps(
         {
@@ -222,7 +220,7 @@ async def create_task(current_user, body: CreateTask):
     responses={200: {"description": "Successful response"}},
 )
 @token_required_registrated
-async def get_task(current_user, path: GetTask):
+async def get_task(current_user: User, path: GetTask) -> Response:  # noqa: ARG001
     service: TaskService = await get_tasks_service()
     try:
         task = await service.get_task(task_id=path.task_id)
@@ -247,14 +245,12 @@ async def get_task(current_user, path: GetTask):
     responses={200: {"description": "Task updated successfully"}},
 )
 @token_required_registrated
-async def put_task(current_user, path: GetTask, body: UpdateTask):
+async def put_task(current_user: User, path: GetTask, body: UpdateTask) -> Response:
     service: TaskService = await get_tasks_service()
     try:
         task = await service.update_task(
             path.task_id,
-            UpdateTask(
-                title=body.title, description=body.description, status=body.status
-            ),
+            UpdateTask(title=body.title, description=body.description, status=body.status),
             user=current_user,
         )
     except errors.NotFoundError:
@@ -280,7 +276,7 @@ async def put_task(current_user, path: GetTask, body: UpdateTask):
     responses={204: {"description": "Task deleted successfully"}},
 )
 @token_required_registrated
-async def delete(current_user, path: GetTask):
+async def delete(current_user: User, path: GetTask) -> Response:
     service: TaskService = await get_tasks_service()
     try:
         task = await service.delete_task(path.task_id, user=current_user)

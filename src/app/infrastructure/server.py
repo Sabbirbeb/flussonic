@@ -1,13 +1,9 @@
-from asgiref.wsgi import WsgiToAsgi
-from flask_openapi3 import Info
-from flask_openapi3 import OpenAPI
-
-from app.settings import settings
-from app.transport.routers import tasks, health, user
-
-
 import ujson
 from flask.json.provider import JSONProvider
+from flask_openapi3 import Info, OpenAPI
+
+from app.settings import settings
+from app.transport.routers import health, tasks, user
 
 
 class UJSONProvider(JSONProvider):
@@ -42,6 +38,6 @@ def make_app() -> OpenAPI:
     ujson_provider = UJSONProvider(app)
     app.json = ujson_provider
 
-    asgi_app = WsgiToAsgi(app)
+    # asgi_app = WsgiToAsgi(app)
 
-    return asgi_app
+    return app

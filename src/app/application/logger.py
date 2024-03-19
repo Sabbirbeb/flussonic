@@ -13,12 +13,9 @@ def log(func):
         signature = ", ".join(args_repr + kwargs_repr)
         logger.debug(f"function {func.__name__} called with args {signature}")
         try:
-            result = func(*args, **kwargs)
-            return result
+            return func(*args, **kwargs)
         except Exception as e:
-            logger.exception(
-                f"Exception raised in {func.__name__}. exception: {str(e)}"
-            )
-            raise e
+            logger.exception(f"Exception raised in {func.__name__}. exception: {e!s}")
+            raise
 
     return wrapper

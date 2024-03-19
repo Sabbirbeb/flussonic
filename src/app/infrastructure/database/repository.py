@@ -2,14 +2,14 @@ import abc
 from typing import Any, Collection, Generic, Never, Self, Type, TypeVar
 from uuid import UUID
 
-from sqlalchemy import Result, Select, exc, insert, select, update, delete
+from sqlalchemy import Result, Select, delete, exc, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import domain
 from app.application import errors
+from app.application.interface import ITasksRepository, IUsersRepository
 from app.application.logger import log
 from app.infrastructure.database import models
-from app.application.interface import ITasksRepository, IUsersRepository
 
 T = TypeVar("T")
 M = TypeVar("M")
@@ -29,11 +29,7 @@ class SqlRepository(abc.ABC, Generic[T, M]):
     @log
     async def bulk_create(self, create_dtos: list[Any]) -> list[T]:
         try:
-            query: Any = (
-                insert(self.model)
-                .values([dto.model_dump() for dto in create_dtos])
-                .returning(self.model)
-            )
+            query: Any = insert(self.model).values([dto.model_dump() for dto in create_dtos]).returning(self.model)
             result = await self.session.execute(query)
 
             objects = result.scalars().all()
@@ -45,9 +41,7 @@ class SqlRepository(abc.ABC, Generic[T, M]):
     @log
     async def create(self, create_dto: Any) -> T:  # noqa: ANN401
         try:
-            cmd = (
-                insert(self.model).values(create_dto.model_dump()).returning(self.model)
-            )
+            cmd = insert(self.model).values(create_dto.model_dump()).returning(self.model)
             result = await self.session.execute(cmd)
 
             obj = result.scalar_one()

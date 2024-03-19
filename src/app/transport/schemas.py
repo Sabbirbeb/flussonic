@@ -5,7 +5,9 @@ from app.domain import TaskStatus
 
 class CreateTask(BaseModel):
     title: str = Field(
-        None, description="Name", json_schema_extra={"example": "Task 1"}
+        None,
+        description="Name",
+        json_schema_extra={"example": "Task 1"},
     )
     description: str = Field(
         None,
@@ -15,9 +17,7 @@ class CreateTask(BaseModel):
 
 
 class UpdateTask(BaseModel):
-    title: str = Field(
-        None, description="Name", json_schema_extra={"example": "Updated task"}
-    )
+    title: str = Field(None, description="Name", json_schema_extra={"example": "Updated task"})
     description: str = Field(
         None,
         description="description",
@@ -31,18 +31,12 @@ class UpdateTask(BaseModel):
 
 
 class GetTask(BaseModel):
-    task_id: int = Field(
-        None, ge=1, description="Tasks ID", json_schema_extra={"example": 1}
-    )
+    task_id: int = Field(None, ge=1, description="Tasks ID", json_schema_extra={"example": 1})
 
 
 class Task(BaseModel):
-    task_id: int = Field(
-        None, ge=1, description="Tasks ID", json_schema_extra={"example": 1}
-    )
-    title: str = Field(
-        None, description="Name", json_schema_extra={"example": "Updated task"}
-    )
+    task_id: int = Field(None, ge=1, description="Tasks ID", json_schema_extra={"example": 1})
+    title: str = Field(None, description="Name", json_schema_extra={"example": "Updated task"})
     description: str = Field(
         None,
         description="description",

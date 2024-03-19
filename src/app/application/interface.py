@@ -8,9 +8,7 @@ from app.application import schemas
 
 class ITasksRepository(ABC):
     @abstractmethod
-    async def bulk_create(
-        self, create_dto: list[schemas.TaskCreate]
-    ) -> list[domain.Task]:
+    async def bulk_create(self, create_dto: list[schemas.TaskCreate]) -> list[domain.Task]:
         ...
 
     @abstractmethod
@@ -22,9 +20,7 @@ class ITasksRepository(ABC):
         ...
 
     @abstractmethod
-    async def update(
-        self, obj_id: int, update_dto: schemas.TaskUpdate
-    ) -> domain.Task | None:
+    async def update(self, obj_id: int, update_dto: schemas.TaskUpdate) -> domain.Task | None:
         ...
 
     @abstractmethod
@@ -46,9 +42,7 @@ class ITasksRepository(ABC):
 
 class IUsersRepository(ABC):
     @abstractmethod
-    async def bulk_create(
-        self, create_dto: list[schemas.UserCreate]
-    ) -> list[domain.User]:
+    async def bulk_create(self, create_dto: list[schemas.UserCreate]) -> list[domain.User]:
         ...
 
     @abstractmethod

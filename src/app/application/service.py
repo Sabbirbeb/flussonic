@@ -18,14 +18,12 @@ class TaskService:
                     description=task.description,
                     status=domain.TaskStatus.WAITING,
                     user_id=task.user_id,
-                )
+                ),
             )
             await self.uow.commit()
         return task
 
-    async def update_task(
-        self, task_id: int, dto: schemas.TaskUpdate, user: schemas.User
-    ) -> domain.Task:
+    async def update_task(self, task_id: int, dto: schemas.TaskUpdate, user: schemas.User) -> domain.Task:
         async with self.uow:
             task = await self.uow.tasks.get(task_id)
             if not task:
@@ -40,9 +38,7 @@ class TaskService:
 
     async def get_tasks(self) -> list[domain.Task]:
         async with self.uow:
-            tasks = await self.uow.tasks.list()
-
-        return tasks
+            return await self.uow.tasks.list()
 
     async def get_task(self, task_id: int) -> domain.Task:
         async with self.uow:
@@ -104,9 +100,7 @@ class TaskService:
 
     async def update_user_to_admin(self, user: schemas.User) -> domain.User:
         async with self.uow:
-            user = await self.uow.users.update(
-                user.id, update_dto=schemas.UserUpdate(admin=True)
-            )
+            user = await self.uow.users.update(user.id, update_dto=schemas.UserUpdate(admin=True))
             await self.uow.commit()
 
         return user

@@ -35,7 +35,7 @@ services:
       - default
 
 volumes:
-  pg_xsm_data:
+  pg_flussonic_data:
     driver: local
 
 networks:

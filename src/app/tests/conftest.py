@@ -8,19 +8,20 @@ from app.application import schemas as dto
 from app.application.interface import IUnitOfWork
 from app.domain import User
 from app.infrastructure.database.models import metadata
-from app.infrastructure.database.session import engine
+from app.infrastructure.database.session import get_database_engine
 from app.infrastructure.server import make_app
 from app.infrastructure.uow import UnitOfWork
 
 
 @pytest.fixture(autouse=True)
-async def _setup_bd() -> AsyncGenerator[None, None]:
-    async with engine.begin() as connection:
+async def setup_bd() -> AsyncGenerator[None, None]:
+    local_async_engine = get_database_engine()
+    async with local_async_engine.begin() as connection:
         await connection.run_sync(metadata.drop_all)
         await connection.run_sync(metadata.create_all)
     yield
     await close_all_sessions()
-    async with engine.begin() as connection:
+    async with local_async_engine.begin() as connection:
         await connection.run_sync(metadata.drop_all)
 
 
@@ -35,14 +36,17 @@ def app() -> OpenAPI:
 
 
 # that doesnt work for asgi idk GL
+# total time spend here: 2 hours
+# update it by yourself  ^
 @pytest.fixture()
-def test_client(app):
+def test_client(app) -> OpenAPI:
     # Create a test client using the Flask application
     with app.test_client() as testing_client:
         yield testing_client  # this is where the testing happens!
 
 
 @pytest.fixture()
+@pytest.mark.asyncio
 async def user(uow: IUnitOfWork) -> User:
     async with uow:
         user = await uow.users.get_by_name("Test")
@@ -55,6 +59,7 @@ async def user(uow: IUnitOfWork) -> User:
 
 
 @pytest.fixture()
+@pytest.mark.asyncio
 async def admin(uow: IUnitOfWork) -> User:
     async with uow:
         user = await uow.users.get_by_name("test_admin")
