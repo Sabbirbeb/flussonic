@@ -14,7 +14,6 @@ from app.infrastructure.uow import UnitOfWork
 
 
 @pytest.fixture(autouse=True)
-@pytest.mark.asyncio
 async def setup_bd() -> AsyncGenerator[None, None]:
     local_async_engine = get_database_engine()
     async with local_async_engine.begin() as connection:
@@ -47,7 +46,11 @@ def test_client(app) -> OpenAPI:
 
 
 @pytest.fixture()
-@pytest.mark.asyncio
+async def unregisterd_user() -> User:
+    return User(id=666, name='WhoAmI', admin=False)
+
+
+@pytest.fixture()
 async def user(uow: IUnitOfWork) -> User:
     async with uow:
         user = await uow.users.get_by_name("Test")
@@ -60,7 +63,6 @@ async def user(uow: IUnitOfWork) -> User:
 
 
 @pytest.fixture()
-@pytest.mark.asyncio
 async def admin(uow: IUnitOfWork) -> User:
     async with uow:
         user = await uow.users.get_by_name("test_admin")

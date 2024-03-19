@@ -1,9 +1,5 @@
-import pytest
-
 from app.domain import User
 
-user_name = "Tem"
-admin_name ="Admin"
 
 class TestIntegrations:
     def test_health(self, test_client) -> None:  # noqa: ANN001
@@ -11,11 +7,11 @@ class TestIntegrations:
 
         assert response.status_code == 200
 
-    def test_create(self, test_client) -> None:  # noqa: ANN001
-        response = test_client.get("/api/v1/tasks", follow_redirects=True,
-                                    headers = {'Authorization': f'Bearer {user_name}'})
-
-        print (response.text)
+    def test_(self, test_client, unregisterd_user: User) -> None:  # noqa: ANN001
+        response = test_client.get(
+            "/api/v1/tasks",
+            follow_redirects=True,
+            headers={"Authorization": f"Bearer {unregisterd_user.name}"},
+        )
 
         assert response.status_code == 403
-

@@ -5,7 +5,7 @@ unsafe-fixes = true
 line-length = 120
 select = ["ALL"]
 exclude = ["venv", "*/migrations/"]
-ignore = ["D1", "D203", "D213", "FA102", "ANN101", "A003", "DTZ005", "B008", "B904", "TRY200", "S101", "RUF003", "EXE002", "S104", "ERA001", "PGH003", "FBT001", "PLR0913", "PLR2004"]
+ignore = ["D1", "D203", "D213", "FA102", "ANN101", "A003", "DTZ005", "B008", "B904", "TRY200", "S101", "RUF003", "EXE002", "S104", "ERA001", "PGH003", "FBT001", "PLR0913", "PLR2004", "INP001"]
 
 [tool.ruff.isort]
 no-lines-before = ["standard-library"]
