@@ -6,7 +6,6 @@ from app.domain import TaskStatus, User
 
 
 class TestTasksRepo:
-    @pytest.mark.asyncio()
     async def test_create(self, uow: IUnitOfWork, user: User) -> None:
         async with uow:
             task = await uow.tasks.create(
@@ -25,7 +24,6 @@ class TestTasksRepo:
         assert task.description == "test_description"
         assert task.user_id == user.id
 
-    @pytest.mark.asyncio()
     async def test_get(
         self,
         uow: IUnitOfWork,
@@ -49,7 +47,6 @@ class TestTasksRepo:
         assert task.description == get_task.description
         assert task.user_id == get_task.user_id
 
-    @pytest.mark.asyncio()
     async def test_update(
         self,
         uow: IUnitOfWork,
@@ -77,7 +74,6 @@ class TestTasksRepo:
         assert get_task.description == "Updated"
         assert get_task.user_id == user.id
 
-    @pytest.mark.asyncio()
     async def test_delete(
         self,
         uow: IUnitOfWork,

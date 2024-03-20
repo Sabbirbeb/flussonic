@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     enviroment: Enviroments = Enviroments.local
 
     pg_dsn: str = "postgresql+asyncpg://postgres:postgres@db/postgres"
+    pg_dsn_test: str = "postgresql+asyncpg://postgres:postgres@db_test/test"
 
     kot: str = "<br>\
 ┈┈┈╭┳┳╮<br>\

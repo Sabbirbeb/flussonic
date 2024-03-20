@@ -1,28 +1,31 @@
-from typing import AsyncGenerator
 
 import pytest
+
 from flask_openapi3 import OpenAPI
 from sqlalchemy.ext.asyncio import close_all_sessions
+from typing import AsyncGenerator
+from httpx import AsyncClient
 
 from app.application import schemas as dto
 from app.application.interface import IUnitOfWork
 from app.domain import User
 from app.infrastructure.database.models import metadata
-from app.infrastructure.database.session import get_database_engine
+from app.infrastructure.database.session import get_database_engine_test
 from app.infrastructure.server import make_app
 from app.infrastructure.uow import UnitOfWork
 
 
+
 @pytest.fixture(autouse=True)
 async def setup_bd() -> AsyncGenerator[None, None]:  # noqa: PT004
-    local_async_engine = get_database_engine()
+    local_async_engine = get_database_engine_test()
     async with local_async_engine.begin() as connection:
         await connection.run_sync(metadata.drop_all)
         await connection.run_sync(metadata.create_all)
     yield
     await close_all_sessions()
-    async with local_async_engine.begin() as connection:
-        await connection.run_sync(metadata.drop_all)
+    # async with local_async_engine.begin() as connection:
+    #     await connection.run_sync(metadata.drop_all)
 
 
 @pytest.fixture()
@@ -72,3 +75,8 @@ async def admin(uow: IUnitOfWork) -> User:
             )
             await uow.commit()
         return user
+
+@pytest.fixture()
+async def client(app: OpenAPI) -> AsyncGenerator[AsyncClient, None]:
+    async with AsyncClient(base_url="http://testserver", app=app) as client:
+        yield client

@@ -10,7 +10,24 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /var/lib/postgres/data
+      - ./pg_flussonic_data:/var/lib/postgres/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - default
+  db_test:
+    image: postgres:16.1-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=test
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./pg_flussonic_data_test:/var/lib/postgres/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -25,6 +42,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      db_test:
+        condition: service_healthy
     ports:
       - "9000:9000"
     healthcheck:
@@ -36,6 +55,8 @@ services:
 
 volumes:
   pg_flussonic_data:
+    driver: local
+  pg_flussonic_data_test:
     driver: local
 
 networks:
