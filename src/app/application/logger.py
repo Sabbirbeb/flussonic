@@ -11,7 +11,7 @@ def log(func):  # noqa: ANN001
         args_repr = [repr(a) for a in args]
         kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]
         signature = ", ".join(args_repr + kwargs_repr)
-        logger.debug(f"function {func.__name__} called with args {signature}")
+        logger.info(f"function {func.__name__} called with args {signature}")
         try:
             return func(*args, **kwargs)
         except Exception as e:

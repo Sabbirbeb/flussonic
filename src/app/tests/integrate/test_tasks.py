@@ -5,6 +5,7 @@ from app.infrastructure.uow import UnitOfWork
 from app.transport.schemas import CreateTask
 
 from httpx import AsyncClient
+import httpx
 
 
 class TestIntegrations:
@@ -30,23 +31,28 @@ class TestIntegrations:
 
         assert response.status_code == 403
 
-    @pytest.mark.asyncio()
     async def test_create(self, client: AsyncClient, user: User, uow: UnitOfWork) -> None:  # noqa: ANN001
         print (CreateTask(title="test_title",
-                            description="test_desc").model_dump_json())
-        response = await client.post(
-            "/api/v1/tasks",
-            follow_redirects=True,
-            headers={"Authorization": f"Bearer {user.name}"},
-            json=CreateTask(title="test_title",
-                            description="test_desc").model_dump_json()
-        )
+                            description="test_desc").model_dump_json(),)
+        
+        async with httpx.AsyncClient() as session:
+            response = await session.post(
+                "http://0.0.0.0:9000/api/v1/tasks",
+                follow_redirects=True,
+                headers={"Authorization": f"Bearer {user.name}"},
+                json=CreateTask(title="test_title",
+                                description="test_desc").model_dump_json()
+            )
+
+            print (response.json())
+
         async with uow:
-            result = await uow.tasks.list()
+            result = await uow.tasks.get(response.json().get('id'))
         
         print (result)
-
-
         assert response.status_code == 201
-        assert response.desciption == "Task created successfully"
+        assert result.title == "test_title"
+        assert result.description == "test_desc"
+    
+    
 

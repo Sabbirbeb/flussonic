@@ -85,6 +85,7 @@ def token_required_registrated(f) -> Response:  # noqa: ANN001
                 "error": str(e),
             }, 500
 
+        print (User(id=current_user.id, name=current_user.name, admin=current_user.admin))
         return await f(
             User(id=current_user.id, name=current_user.name, admin=current_user.admin),
             *args,
@@ -197,7 +198,10 @@ async def get_tasks(current_user: User) -> Response:  # noqa: ARG001
 )
 @token_required_registrated
 async def create_task(current_user: User, body: CreateTask) -> Response:
+    print (body)
     service: TaskService = await get_tasks_service()
+    print (body.title, body.description, current_user.id)
+    print (TaskCreate(title=body.title, description=body.description, user_id=current_user.id))
     task = await service.create_task(
         TaskCreate(title=body.title, description=body.description, user_id=current_user.id),
     )
