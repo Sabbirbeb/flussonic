@@ -297,4 +297,4 @@ async def delete(current_user: User, path: GetTask) -> Response:
             "user_id": task.user_id,
         },
         indent=2,
-    ), 200
+    ), 204
