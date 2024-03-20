@@ -12,7 +12,7 @@ class UJSONProvider(JSONProvider):
     ensure_ascii = False
     indent = 4
 
-    def dumps(self, obj, **kwargs):
+    def dumps(self, obj, **kwargs):  # noqa: ARG002 ANN001
         option = {
             "encode_html_chars": self.encode_html_chars,
             "ensure_ascii": self.ensure_ascii,
@@ -20,7 +20,7 @@ class UJSONProvider(JSONProvider):
         }
         return ujson.dumps(obj, **option)
 
-    def loads(self, s, **kwargs):
+    def loads(self, s: str, **kwargs):  # noqa: ARG002
         return ujson.loads(s)
 
 

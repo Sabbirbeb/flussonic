@@ -14,7 +14,7 @@ from app.infrastructure.uow import UnitOfWork
 
 
 @pytest.fixture(autouse=True)
-async def setup_bd() -> AsyncGenerator[None, None]:
+async def setup_bd() -> AsyncGenerator[None, None]:  # noqa: PT004
     local_async_engine = get_database_engine()
     async with local_async_engine.begin() as connection:
         await connection.run_sync(metadata.drop_all)
@@ -39,7 +39,7 @@ def app() -> OpenAPI:
 # total time spend here: 2 hours
 # update it by yourself  ^
 @pytest.fixture()
-def test_client(app) -> OpenAPI:
+def test_client(app: OpenAPI) -> OpenAPI:
     # Create a test client using the Flask application
     with app.test_client() as testing_client:
         yield testing_client  # this is where the testing happens!
@@ -47,7 +47,7 @@ def test_client(app) -> OpenAPI:
 
 @pytest.fixture()
 async def unregisterd_user() -> User:
-    return User(id=666, name='WhoAmI', admin=False)
+    return User(id=666, name="WhoAmI", admin=False)
 
 
 @pytest.fixture()

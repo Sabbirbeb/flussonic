@@ -31,3 +31,6 @@ test_all:
 
 test_path:
 	docker compose exec app pytest -s --tb=native -vv app/tests/${path}
+
+yaml_spec:
+	flask --app src/main:app openapi -f yaml --output openapi.json

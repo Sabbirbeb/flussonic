@@ -5,7 +5,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
 
-def log(func):
+def log(func):  # noqa: ANN001
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         args_repr = [repr(a) for a in args]
